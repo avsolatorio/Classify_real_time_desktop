@@ -149,6 +149,7 @@ last = 0
 human_string = None
 max_human_string = None
 max_score = 0
+observable_objects = []
 
 # Init video stream
 vs = VideoStream(src=0).start()
@@ -203,23 +204,31 @@ with tf.Session() as sess:
                         max_human_string = human_string
                         max_score = score
 
+                    observable_objects.append(human_string)
+
             current = time.time()
             fps = frame_count / (current-start)
 
         # Speech module
-        if last > 40 and pygame.mixer.music.get_busy() == False and (human_string is not None) and human_string == max_human_string:  # human_string_n:
+        if last > 40 and pygame.mixer.music.get_busy() == False and (max_human_string in observable_objects):  # human_string_n:
             pred += 1
             name = human_string_filename + ".mp3"
 
             # Only get from google if we dont have it
             if not os.path.isfile(name):
-                tts = gTTS(text="I see a "+human_string, lang='en')
+                tts = gTTS(text="I see a " + human_string, lang='en')
                 tts.save(name)
 
             last = 0
             max_score = 0
             pygame.mixer.music.load(name)
             pygame.mixer.music.play()
+
+        if max_human_string not in observable_objects:
+            max_human_string = None
+            max_score = 0
+
+        observable_objects = []
 
         # Show info during some time
         if last < 40 and frame_count > 10:
